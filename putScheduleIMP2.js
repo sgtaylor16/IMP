@@ -72,7 +72,7 @@ function putAccounts(svgid,dataarray){
     //Find the tasks with > 0 duration, they will be marked as bars.
     let tasks = dataarray.filter(checkforTasks);
     //find the unique control accounts
-    uniqueCAs = findAccounts(tasks);
+    uniqueCAs = findAccounts(dataarray);
         
     let barheight = 40;
     
@@ -80,6 +80,10 @@ function putAccounts(svgid,dataarray){
     let height = document.getElementById(svgid.slice(1)).getAttribute("height");
     let width = document.getElementById(svgid.slice(1)).getAttribute("width");
     let margin = 20;
+
+    height = uniqueCAs.length * (barheight + 10) + axisheight
+
+    //document.getElementById(svgid.slice(1)).setAttribute("height",newheight);
 
     let schedScale = d3.scaleTime()
                     .domain([schedStart,schedEnd])
@@ -92,7 +96,7 @@ function putAccounts(svgid,dataarray){
 
     let rectHeight = d3.scaleBand()
                     .domain(uniqueCAs)
-                    .range([0, height]);
+                    .range([0, height - axisheight]);
 
 
 
@@ -103,7 +107,9 @@ function putAccounts(svgid,dataarray){
         .attr("cx",function(d,i){
             return schedScale(d.Start);
         })
-        .attr("cy",height/2)
+        .attr("cy",function(d,i){
+        return (rectHeight(d.Account) + barheight * 0.5)
+        })
         .attr("r",5)
 
     //#region Put in Rectangles
@@ -115,7 +121,9 @@ function putAccounts(svgid,dataarray){
         .attr("x",function(d,i){
             return schedScale(d.Start);
         })
-        .attr("y",rectHeight)
+        .attr("y",function(d,i){
+            return rectHeight(d.Account)
+        })
         .attr("rx",barheight/4)
         .attr("width",function(d,i){
             return schedScale(d.Finish) - schedScale(d.Start);
@@ -146,11 +154,10 @@ function makeIMP(filepath,svgid,CAfilter){
         alldata = data; //puts the data in global scope
         
         //filter only on the accounts that are in CAfilter
-        mymilestones = accountsFilter(alldata,['Milestones'])
-        mytasks = accountsFilter(alldata,['DTF'])
 
-        putAccounts("#Milestones",mymilestones)
+        mytasks = accountsFilter(alldata,CAfilter);
 
-        putAccounts("#Programs",mytasks)
+        putAccounts(svgid,mytasks)
+
     })
 }
