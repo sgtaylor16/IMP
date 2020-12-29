@@ -66,7 +66,7 @@ function accountsFilter(data,AccountFilter){
     return outputarray;
 }
 
-function putAccounts(svgid,dataarray){
+function putAccounts(svgid,dataarray,yaxis){
     svg = d3.select("svg" + svgid) //Select the svg element that all plotting will happen on.
 
     //Find the tasks with zero duration, they will be marked as diamond milestones
@@ -81,7 +81,7 @@ function putAccounts(svgid,dataarray){
     //Get the height of the svg element
     let height = document.getElementById(svgid.slice(1)).getAttribute("height");
     let width = document.getElementById(svgid.slice(1)).getAttribute("width");
-    let margin = 60;
+    let margin = 100;
     let topProtection = 80;
     let axisheight = 70;
     let barheight = 30;
@@ -109,6 +109,10 @@ function putAccounts(svgid,dataarray){
     let colorScale = d3.scaleOrdinal()
                         .domain(uniqueCAs)
                         .range(d3.schemePastel1);
+
+    var accountAxis = d3.axisLeft()
+                    .scale(rectHeight)
+                    .ticks(uniqueCAs)
 
 //#endregion Scales
 
@@ -140,7 +144,7 @@ function putAccounts(svgid,dataarray){
     .attr("transform",function(d,i){
         let cx = schedScale(d.Start);
         let cy = rectHeight(d.Account) + barheight * 0.5;
-        return ('rotate(-45,'+ cx + ',' + cy + ')')
+        return ('rotate(-25,'+ cx + ',' + cy + ')')
     })
     .style("text-anchor", "start")
     .attr("font-size",fontsize);
@@ -189,18 +193,25 @@ function putAccounts(svgid,dataarray){
 
 //#region Put in date Axis
     let temp1 = newheight - axisheight;
-    dateax = svg.append("g").call(timeAxis).attr("class","axis")
+    svg.append("g").call(timeAxis).attr("class","axis")
                     .attr("transform","translate(0," + temp1 + ")" )
                     .selectAll("text")
                     .attr("transform", "translate(-10,10)rotate(-45)")
                     .style("text-anchor", "end");
 //#endregion
 
+//#region labels on y axis
+console.log(yaxis)
+    if(yaxis){
+    svg.append("g").call(accountAxis)
+                    .attr("transform","translate(" + margin + ",0)")
+    }
+//#endregion
 }
-    
+
 var alldata, mymilestones, mytasks
 
-function makeIMP(filepath,svgid,CAfilter){
+function makeIMP(filepath,svgid,CAfilter,yaxis = false){
     //d3 read in file
     d3.csv(filepath,sched_access)
     .then(function(data){
@@ -210,7 +221,7 @@ function makeIMP(filepath,svgid,CAfilter){
 
         mytasks = accountsFilter(alldata,CAfilter);
 
-        putAccounts(svgid,mytasks)
+        putAccounts(svgid,mytasks,yaxis)
 
     })
 }
