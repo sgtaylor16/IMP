@@ -1,7 +1,9 @@
 var schedStart = new Date(2020,12,25), schedEnd = new Date(2024,6,1)
 var margin = 100;
-var axisheight = 50;
+var rectHeight;
+
 var schedScale
+var svg
 
 
 function sched_access({Index,Name,Start,Finish,Account}){
@@ -65,7 +67,7 @@ function accountsFilter(data,AccountFilter){
 }
 
 function putAccounts(svgid,dataarray){
-    let svg = d3.select("svg" + svgid) //Select the svg element that all plotting will happen on.
+    svg = d3.select("svg" + svgid) //Select the svg element that all plotting will happen on.
 
     //Find the tasks with zero duration, they will be marked as diamond milestones
     let zerodur = dataarray.filter(checkforZeroDuration);
@@ -74,16 +76,19 @@ function putAccounts(svgid,dataarray){
     //find the unique control accounts
     uniqueCAs = findAccounts(dataarray);
         
-    let barheight = 40;
+
     
     //Get the height of the svg element
     let height = document.getElementById(svgid.slice(1)).getAttribute("height");
     let width = document.getElementById(svgid.slice(1)).getAttribute("width");
     let margin = 20;
+    let topProtection = 80;
+    let axisheight = 70;
+    let barheight = 40;
 
-    height = uniqueCAs.length * (barheight + 10) + axisheight
+    newheight = uniqueCAs.length * (barheight + 10) + axisheight + topProtection;
 
-    //document.getElementById(svgid.slice(1)).setAttribute("height",newheight);
+    document.getElementById(svgid.slice(1)).setAttribute("height",newheight);
 
     let schedScale = d3.scaleTime()
                     .domain([schedStart,schedEnd])
@@ -96,9 +101,11 @@ function putAccounts(svgid,dataarray){
 
     let rectHeight = d3.scaleBand()
                     .domain(uniqueCAs)
-                    .range([0, height - axisheight]);
+                    .range([topProtection, newheight - axisheight]);
 
-
+    let colorScale = d3.scaleOrdinal()
+                        .domain(uniqueCAs)
+                        .range(d3.schemePastel1);
 
     //Put in the Milestone Circles
     svg.selectAll("circle")
@@ -111,6 +118,25 @@ function putAccounts(svgid,dataarray){
         return (rectHeight(d.Account) + barheight * 0.5)
         })
         .attr("r",5)
+
+    svg.selectAll("text")
+    .data(zerodur)
+    .join("text")
+    .text(function(d,i){
+        return d.Name
+    })
+    .attr("x",function(d,i){
+        return schedScale(d.Start) + 10;
+    })
+    .attr("y",function(d,i){
+        return (rectHeight(d.Account) + barheight * 0.5);
+    })
+    .attr("transform",function(d,i){
+        let cx = schedScale(d.Start);
+        let cy = rectHeight(d.Account) + barheight * 0.5;
+        return ('rotate(-45,'+ cx + ',' + cy + ')')
+    })
+    .style("text-anchor", "start");
 
     //#region Put in Rectangles
 
@@ -129,13 +155,30 @@ function putAccounts(svgid,dataarray){
             return schedScale(d.Finish) - schedScale(d.Start);
         })
         .attr("height",barheight)
+        .attr("fill",function(d,i){
+            return colorScale(d.Account);
+        })
+        .attr("fill-opacity",0.7)
 
+    /* svg.selectAll("text")
+        .data(tasks)
+        .join("text")
+        .text(function(d,i){
+            return d.Name
+        })
+        .attr("x",function(d,i){
+            return (schedScale(d.Start)+5)
+        })
+        .attr("y",function(d,i){
+            return (rectHeight(d.Account) + 0.5 * barheight)
+        })
+ */
 
     //#endregion
 
 
     //#region Put in date Axis
-    let temp1 = height - axisheight;
+    let temp1 = newheight - axisheight;
     dateax = svg.append("g").call(timeAxis).attr("class","axis")
                     .attr("transform","translate(0," + temp1 + ")" )
                     .selectAll("text")
