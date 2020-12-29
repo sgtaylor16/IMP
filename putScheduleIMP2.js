@@ -1,4 +1,4 @@
-var schedStart = new Date(2020,12,25), schedEnd = new Date(2024,6,1)
+var schedStart = new Date(2020,10,25), schedEnd = new Date(2024,6,1)
 var margin = 100;
 var rectHeight;
 
@@ -81,14 +81,17 @@ function putAccounts(svgid,dataarray){
     //Get the height of the svg element
     let height = document.getElementById(svgid.slice(1)).getAttribute("height");
     let width = document.getElementById(svgid.slice(1)).getAttribute("width");
-    let margin = 20;
+    let margin = 60;
     let topProtection = 80;
     let axisheight = 70;
-    let barheight = 40;
+    let barheight = 30;
+    let fontsize = 14;
 
     newheight = uniqueCAs.length * (barheight + 10) + axisheight + topProtection;
 
     document.getElementById(svgid.slice(1)).setAttribute("height",newheight);
+
+//#region Scales
 
     let schedScale = d3.scaleTime()
                     .domain([schedStart,schedEnd])
@@ -107,6 +110,9 @@ function putAccounts(svgid,dataarray){
                         .domain(uniqueCAs)
                         .range(d3.schemePastel1);
 
+//#endregion Scales
+
+//#region Milestone Circles
     //Put in the Milestone Circles
     svg.selectAll("circle")
         .data(zerodur)
@@ -136,10 +142,12 @@ function putAccounts(svgid,dataarray){
         let cy = rectHeight(d.Account) + barheight * 0.5;
         return ('rotate(-45,'+ cx + ',' + cy + ')')
     })
-    .style("text-anchor", "start");
+    .style("text-anchor", "start")
+    .attr("font-size",fontsize);
 
-    //#region Put in Rectangles
+//#endregion
 
+//#region Put in Rectangles
 
     svg.selectAll("rect")
         .data(tasks)
@@ -160,9 +168,10 @@ function putAccounts(svgid,dataarray){
         })
         .attr("fill-opacity",0.7)
 
-    /* svg.selectAll("text")
+     svg.selectAll("text.tasks")
         .data(tasks)
         .join("text")
+        .attr("class","tasks")
         .text(function(d,i){
             return d.Name
         })
@@ -170,21 +179,22 @@ function putAccounts(svgid,dataarray){
             return (schedScale(d.Start)+5)
         })
         .attr("y",function(d,i){
-            return (rectHeight(d.Account) + 0.5 * barheight)
+            return (rectHeight(d.Account) + 0.5 * barheight + 0.4 * fontsize)
         })
- */
+        .attr("font-size",fontsize);
+ 
 
-    //#endregion
+//#endregion
 
 
-    //#region Put in date Axis
+//#region Put in date Axis
     let temp1 = newheight - axisheight;
     dateax = svg.append("g").call(timeAxis).attr("class","axis")
                     .attr("transform","translate(0," + temp1 + ")" )
                     .selectAll("text")
                     .attr("transform", "translate(-10,10)rotate(-45)")
                     .style("text-anchor", "end");
-    //#endregion
+//#endregion
 
 }
     
